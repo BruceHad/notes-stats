@@ -1,0 +1,7 @@
+steps,date,interval,week
+5,2012-10-01,1,weekend
+10,2012-10-01,2,weekend
+10,2012-10-01,3,weekend
+5,2012-10-02,1,weekday
+12,2012-10-02,2,weekday
+17,2012-10-02,3,weekday

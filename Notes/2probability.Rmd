@@ -1,0 +1,586 @@
+# Probability
+
+## Probability Calculus
+
+Probability assesses the likelihood that something will happen as a ratio of the number of desired outcomes, vs the total number of possible outcode. 'Odds' do the same thing, in a slightly different way: it is the ratio of number of desired outcomes, vs the number of times it didn't happen.
+
+Basic rules of probability calculus:
+
+1. Probability nothing occurs is 0. So probability something occurs is 1.
+2. For _independent_ events A and B, the probability that at least one of them occurs is P(A) + P(B). 
+3. For _dependent_  events (i.e. if the events 'overlap'), the probability that at least one of them occurs is the sum of probabilities _minus the intersection_, so: P(A u B) = P(A) + P(B) - P(A n B)
+
+Conditional Probability:
+
+The probability that an event A has occurred given another event B has already occurred is given by:
+
+    P(A | B) = P(A n B)/P(B)
+    
+In other words, the probability of A, given B, equals the probability of A or B happening, divided by the probability of B.
+
+If A and B are unrelated then this simplifies to:
+    
+    P(A | B) = P(A)P(B)/P(B) = P(A)
+    
+## Bayes Rule
+    
+Bayes rule provides a way of switch the conditioning of events via the formula:
+
+    P(B | A) = P(A | B)P(B)/P(A | B)P(B) + P(A | Bc)P(Bc)
+    
+Where P(Ac) is the probability that A does _not_ occur, which is 1-P(A).
+
+## Summary
+
+* For _independent_ events A and B, the probability that at least one of them occurs is P(A) + P(B). 
+* For _dependent_  events (i.e. if the events 'overlap'), the probability that at least one of them occurs is the sum of probabilities _minus the intersection_, so: P(A u B) = P(A) + P(B) - P(A n B)
+* The probability that an event A has occurred given another event B has already occurred is given by: P(A | B) = P(A n B)/P(B)
+*If A and B are unrelated then this simplifies to: P(A | B) = P(A)P(B)/P(B) = P(A)
+* Bayes rule provides a way of switch the conditioning of events via the formula:    P(B | A) = P(A | B)P(B)/P(A | B)P(B) + P(A | Bc)P(Bc)
+
+What's next?
+
+When working with data populations and numeric outcomes, we need something a bit easier to work with. Probability distributions (_Density and mass functions_) for _random variables_ are the best starting point for this.
+
+
+# Probability Distributions
+
+## Random Variables
+
+A random variable is a variable whose value is subject to variations due to chance. It can take on a set of different values, each with an associated probability.
+
+Random variables can be discrete (take one of a finite number of possible values, e.g. a die roll) or continous (take a continuous range of values, e.g. the height of a person). You also get mixed types.
+
+Independent Random variables drawn from the same population are called independent and identically distributed (IID). These are the model for random samples, the starting point for most statistical inference.
+
+## Distributions
+
+A probability distribution assigns a probability to each measurable subset of the possible outcomes of a random experiment, survey, or procedure of statistical inference.
+
+It can be specified in a number of different ways, often chosen for mathematical convenience:
+
+* A probability mass function or probability density function.
+* A cumulative distribution function or survival function.
+* A hazard or characteristic function.
+
+A probability distribution can either be _univariate_ or _multivariate_. We concentrate on univariate distributions, which give the probabilities of a single random variable.
+
+Common univariate probability distributions include:
+
+* The binomial distribution
+* The hypergeometric distribution
+* The normal distribution
+
+We'll cover the details of various common distributions later.
+
+A _histogram_ is a common representation of the distribution, which graphs the frequency (number of occurences) _or_ the probability of each value. These are basically the same thing at different scales as the probability is frequency/n.
+
+```{r}
+
+sample <- sample(1:6, 5000, replace=TRUE)
+par(mfrow=c(1, 2))
+hist(sample, breaks=seq(-0.5,6.5,1), main = "Frequency")
+hist(sample, breaks=seq(-0.5,6.5,1), freq = FALSE, main="Probability")
+
+```
+
+The normalised histogram describes the Probability Mass Function (PMF) for random variables. 
+
+## Probability Functions
+
+Probability Functions (PDF and PMF) are functions that mathematically characterise the population being analysed.  
+
+In statistics and probability, outcomes tend to be discrete (like the result of a die roll, they can only take one of a few discrete values) or continuous (like the number of hours slept per night, they can take any value on a line, often within some range). 
+
+The Probability Mass Function (PMF) describe discrete data, whiled Probability density Functions (PMF) are used for continuous data. The PMF represents the probability that an result takes a particular value and the Density function represent the probability a result is _between a specified range_ of values. 
+
+PMF Rules: 
+
+1. Every possible event must have a probability of 0 or more.
+2. The sum of the probabilities for all possible events must add up to 1.
+
+PDF rules: 
+
+Probability density function represent continuous type data and are usually drawn as a line on a graph. Areas under the line correspond to the probability of the result falling the range specified.
+
+* The the PDF must be >= to 0 at all points along the line.
+* The area under the line must add up to one.
+
+_Example:_
+
+The PMF for a coin flip is a function:
+
+> p(x) = θ<sup>x</sup> * (1 - θ)<sup>1-x</sup>
+
+Where θ = probability of a head, and x = 0,1
+    
+So for a fair coin where θ = 0.5
+    
+> p(x) = 0.5<sup>x</sup> * 0.5<sup>1-x</sup>
+> p(head) = 0.5 * 1 = 0.5
+> p(tail) = 1 * 0.5 = 0.5
+
+
+```{r}
+
+coin <- sample(c(0,1), size = 10000, replace = TRUE, prob = c(0.5,0.5))
+unfair_coin <- sample(c(0,1), size = 10000, replace = TRUE, prob = c(0.4,0.6))
+par(mfrow = c(1,2))
+hist(coin, breaks = c(-0.5, 0.5, 1.5), freq=FALSE)
+hist(unfair_coin, breaks = c(-0.5, 0.5, 1.5), freq = FALSE)
+
+```
+
+This is an binomial distribution, which we'll see in more detail later.
+
+_Another Example:_
+
+The PDF for the percentage of calls answered in a day is given by 2x.
+
+    p(x) = 2x for 0 <= x <= 1
+ 
+_Note:_ This is a special case of the beta density.
+
+The line can be plotted in R like so:
+
+```{R}
+    x <- c(-0.5, 0, 1, 1, 1.5)
+    y <- c(0, 0, 2, 0, 0)
+    plot(x, y, frame = FALSE, type = "l")
+```
+
+And to calculate the probability of answering 75% or fewer calls in the same day, we just have to calculate the area under the triangle. 75% is the percentile. So 0.75 is the quantile:
+
+    base = 0.75
+    height = 2 * base
+    area = 0.5 * base * height
+    # [1] 0.5625
+    
+So there  is a 56% probability that 75% or fewer calls will be answered in a day. And therefore 44% chance that more than 75% get answered in the same day.
+
+
+## Mean &amp; Variance
+
+The mean of a probability  distribution, is the 'expected value', the centre of its distribution. You can think of it as the centre of mass, the tipping point where each side balances.
+
+For _discrete_ random variable X with PMF p(x), the expected value of X is:
+
+> E[X] = sum(x * p(x))
+    
+So for the example of a coin flip where p(head) = 0.5:
+
+> E[X] = 0.5 * 0 + 0.5 * 1 = 0.5
+> Or for a biased coin where p(head) = 0.1: 
+> E[x] = 0.9 * 0 + 0.1 * 1 = 0.1
+
+```{r}
+
+coin <- sample(c(0,1), size = 10000, replace = TRUE, prob = c(0.5,0.5))
+unfair_coin <- sample(c(0,1), size = 10000, replace = TRUE, prob = c(0.1,0.9))
+
+par(mfrow = c(1,2))
+
+hist(coin, breaks = c(-0.5, 0.5, 1.5), freq=FALSE)
+abline(v = mean(coin), col = "red")
+mean(coin) # approx 0.5
+
+hist(unfair_coin, breaks = c(-0.5, 0.5, 1.5), freq = FALSE)
+abline(v = mean(unfair_coin), col = "red")
+mean(unfair_coin) # approx 0.9
+
+```
+
+Therefore for a binomial distribution the mean is the same as the probability p.
+
+Variance is a measure of the spread of a set of data (how much is varies). It is the mean squared deviation from the mean.
+
+If X is a random variable with mean μ:
+
+>Var(X)  = E[(X - μ)**2]   
+>        = Sum((X - μ)**2)/n  
+>        = E[X**2] - E[X]**2  
+
+This later equation is how it is usually expressed.
+
+The sqrt of the variance is the Standard Deviation.
+
+SD has the same units as the population (e.g. if you are measuring height then SD will be inches (Var would be in inches squared).
+
+So for an example where a fair die is rolled, it has an mean (expectated value) of 3.5.
+
+> E[X] = sum(x * p(x)) = 3.5
+
+And:
+
+> E[X**2] = sum(x**2 * p(x)) = 15.17
+
+So the variance is given by:
+
+> Var(X) = E[X**2] - E[X]**2  
+> = 15.17 - 3.5**2  
+> = 2.92
+
+This can be visualised by looking at the probability distribution.
+
+```{r}
+
+die <- sample(1:6, size = 100000, replace = TRUE)
+br = 1:7 - 0.5
+hist(die,  breaks = br, freq=FALSE)
+abline(v = c(mean(die), mean(die) - var(die), mean(die) + var(die)), col = "red")
+mean(die) # approx 3.5
+var(die) # approx 2.92
+
+```
+
+The coin toss, where x = (0,1), we've already seen the mean is the same as the probability p.
+
+> E[X] = sum(x * p(x)) = p  
+> And E[X**2] = p (since 0<sup>2</sup> = 0 and 1<sup>2</sup> = 1)
+    
+So:
+
+> Var(X) = E[X**2] - E[X]**2
+> = p - p*2 
+> = p(1 - p)
+
+Worth memorising.
+
+And for kicks, we can plotting the binomial variance for various values of p:
+
+```{r}
+p = seq(0 , 1, length = 100)
+variance = p * (1 - p)
+plot(p, variance, type = "l", lwd = 3, frame = FALSE)
+abline(v = mean(p))
+```
+So we can see that the variance is maximised for a fair coin (p = 0.5).
+
+## Cumulative Distribution & Survival Functions
+
+The CDF and survival functions are parts of PDF/PMFs. The CDF returns the probability that the random variable is less than or equal the value. The survival function is the inverse of the CDF, that is it returns the probability the random variable is greater than the value.
+
+    CDF: F(x) = P(X <= x)
+    Survival: S(x) = P(X > x)
+    And note: S(x) = 1 - F(x)
+    
+In the case of a continuous distribution, the CDF gives the area under the PDF from up to the point x.
+
+The CDF of a continuous random variable can be expressed as the intergral of its PDF.
+    
+_Example:_
+
+As in previous example where the PDF for the percentage of calls answered in a day is given by 2x (p(x) = 2x), which is a type of beta distribition.
+
+So what's the CDF for this function? We've already calculated the probability as the area under the triangle = 0.5 * base * height. Therefore the CDF is x**2. Note this is the integral of 2x.
+
+    CDF: F(x) = P(X <= x) 
+            = 1/2 * base * height
+            = 0.5 * x * 2x 
+            = x**2
+
+
+```{r}
+
+# Beta
+x = seq(0, 1, by = 0.1)
+pdf = 2 * x
+cdf = x**2
+x = c(-0.5, 0, x, 1, 1.5)
+pdf = c(0, 0, pdf, 0, 0)
+cdf = c(0, 0, cdf, 0, 0)
+par(mfrow = c(1,2))
+plot(x, pdf, type = 'l', main = "PDF")
+plot(x, cdf, type = 'l', main = "CDF")
+
+# Uniform
+x = seq(0, 1, by = 0.1)
+pdf = rep(1, length(x))
+cdf = 1 * x
+x = c(-0.5, 0, x, 1, 1.5)
+pdf = c(0, 0, pdf, 0, 0)
+cdf = c(0, 0, cdf, 0, 0)
+par(mfrow = c(1,2))
+plot(x, pdf, type = 'l', main = "PDF")
+plot(x, cdf, type = 'l', main = "CDF")
+
+```
+
+## Summary
+
+* Random variables are variables that can take on a range of values (due to chance), each value associated with a probability.
+* Random variables can be discrete, continous or mixed.
+* Random variables can be plotted as a histogram, the shape of which describes the probability distribution. 
+* Expected values are properties of distributions.
+* The population mean is the centre of mass of the population and the sample mean is the centre of mass of the observed data.
+* The sample mean is unbiased, the population mean of it's sample distribution is the mean that it's trying to estimate.
+* The more data that goes into the sample mean, the more concentrated it gets around the population mean.
+* The sample variance estimates the population variance s<sup>2</sup>.
+* The distribution of the sample variance is centred around the SD σ<sup>2</sup>.
+* The variance of the sample mean is pop variance/n - σ<sup>2</sup>/n. It's logical estimate is the sample variance/n s<sup>2</sup>/n. Therefore the logical estimate of the standard error is S/sqrt(n).
+* Where S, the standard deviation, talks about how variable the population is. SE S/sqrt(n) talks about how variable the means of random samples of size n are.
+* The sample variance estimates the population variance.
+* The distribution of the sample variance is centred at the population variance and it gets more concentrated as sample sizes increase.
+
+What's next?
+
+# Common Probility Distributions
+
+With probability modeling we assume a distribution for our population as a way of characterising it. These are common distributions used.
+
+## Bernoulli
+
+The bernoulli distribution arises as the result of a binary outcome (coin flip). e.g. a random sample modeling whether or not a patient has high blood pressure.
+
+Variable take only the values 1 or 0 with probabilities p and 1-p. Typically 1 is a success and 0 is a failure.
+
+Bernoulli distribution with success probability p is written X ~ Bernoulli(p).
+ 
+PMF: P(X = x) = p<sup>x</sup>(1 - p)<sup>1-x</sup>
+Mean: p
+Variance: p(1 - p)
+
+## Binomial
+
+The binomial distribution is the discrete probability distribution of the _number of successes in a sequence_ on independent yes/no questions (bernoulli).
+
+It has two parameters: n is the number of bernoulli tests and p is the probability of the tests.
+
+So if a bernoulli trial is a fair coin flip, a binomial random variable is the total number of heads with probility of 0.5.
+
+Binomial distribution is written X ~ Binomial(n,p).
+
+```{r}
+
+par(mfrow = c(1,2))
+
+# PMF
+x <-seq(0, 100, length.out = 51); 
+binomial <- dbinom(x, size = 100, prob = 0.5) 
+plot(x, binomial, type="p", bty = "n", col="red", ylim=c(0,0.2), cex = 0.5, main="PMF")
+
+x <-seq(0, 50, length.out = 51);
+binomial <- dbinom(x, size = 50, prob = 0.5) 
+points(x, binomial, type="p", bty = "n", col="blue", cex = 0.5)
+
+x <-seq(0, 20, length.out = 21);
+binomial <- dbinom(x, size = 20, prob = 0.5) 
+points(x, binomial, type="p", bty = "n", col="green", cex = 0.5)
+
+# Cumulative
+x <-seq(0, 100, length.out = 51); 
+cum <- pbinom(x, size = 100, prob = 0.5) 
+plot(x, cum, type="p", bty = "n", col="red", cex = 0.5, main="CDF")
+
+x <-seq(0, 50, length.out = 51);
+cum <- pbinom(x, size = 50, prob = 0.5) 
+points(x, cum, type="p", bty = "n", col="blue", cex = 0.5)
+
+x <-seq(0, 20, length.out = 21);
+cum <- pbinom(x, size = 20, prob = 0.5) 
+points(x, cum, type="p", bty = "n", col="green", cex = 0.5)
+
+```
+
+
+If x is the number of successes (i.e. the sum of each outcome).
+
+PMF: P(X = x) = (n choose x) p <sup>x</sup>(1 - p)<sup>n-x</sup>
+Mean: np
+Variance: np(1 - p)
+
+Recall that (n choose x) is the binomial coefficient = n!/x!(n-x)!. It counts the number of ways of selecting x items out of n, without replacement, disregarding the order of the items. It turns out that n choose 0, n choose 1 and choose n - 1 are all 1.
+
+Example: You flip a fair coin 5 times, about what's the probability of getting 4 or 5 heads?
+
+```{r}
+n = 5
+p = 0.5
+x1 = 4
+x2 = 5
+
+# Fist we could calculate it manually
+choose(n, x1) * p**x1 * (1-p)**(n-x1) + choose(n, x2) * p ** x2 * (1-p)**(n-x2) # 0.1875
+# Or we could use the binomial functions
+pbinom(3, size = 5, prob = 0.5, lower.tail = FALSE) # 0.1875
+```
+
+## Normal Distribution
+
+https://en.wikipedia.org/wiki/Normal_distribution
+
+Aka, the Gaussian distribution, the Normal distribution is a  common continuous probability distribution.
+
+```{r}
+x <- seq(0,100, length.out = 100)
+pdf <- dnorm(x, mean = 50, sd = 10)
+par(mfrow = c(1,2))
+plot(x, pdf, type = "l", main = "PDF")
+cdf <- pnorm(x, mean = 50, sd = 10)
+plot(x, cdf, type = "l", main = "CDF")
+```
+
+The normal distribution is characterised by the mean μ and variance σ<sup>2</sup>. A normal distribution is written X ~ N(μ, σ<sup>2</sup>).
+
+### Standard Normal
+
+A normal distribution with μ = 0 and σ = 1 is called the __Standard Normal Distribution__. Often labeled Z.
+
+```{r}
+x <- seq(-5, 5, length.out = 100)
+pdf <- dnorm(x)
+plot(x, pdf, type = "l", main = "Standard Normal Distribution")
+abline(v = c(-1, 0, 1), lty = c(2,1,2))
+```
+
+Since the normal distribution is characterized by only the mean and variance, which are a shift and a scale, we can transform normal random variables to be standard normals and vice versa.
+
+> Z = (X - μ)/σ  
+> X = μ + σZ 
+
+
+We can use this to answer questions about normal distributions, referring back to Standard Normals.
+
+### Reference Statistics for Normal Distribution
+
+Remember the percentile/quantile is the _value_ at which a given percentage is below. R seems to have some mixup over terminology, so I'm going to refer to percentiles such that 90th percentile is the value at which 90% of the population is below that value.
+
+So for a standard normal, the 90th percentile is 1.282
+
+```{r}
+qnorm(0.9) # 1.282
+```
+
+This can be applied to a normal distribution with a mean of 65 and SD of 10:
+
+```{r}
+
+m = 65
+s = 10
+x <- seq(30, 100)
+pdf <- dnorm(x, mean = m, sd = s)
+plot(x, pdf, type = "l")
+
+```
+
+Now theoretically, the value at 1.282 * 10 from the mean should be the 90th percentile. So lets try this.
+
+```{r}
+
+q = m + qnorm(0.9) * s
+
+pnorm(q, mean = m, sd = s) # 0.9
+
+```
+
+The main normal functions in R are:
+
+* dnorm(x) - (PDF) Density function. Takes  value x and returns the point on the PDF distribution. 
+* pnorm(q) - (CDF) Distribution function. Takes the quantile q and return the percentage of the population on or below that. 
+* qnorm(p) - Quantile Function. Kinda inverse of pnorm.
+* rnorm(n) - Random Deviates function. Simulates normal independent variables.
+
+It is useful to memorise _approximate_ reference probabilities and quantiles.
+
+The percentages covered by the mean +/- 1, 2 or 3 SD is as follows:
+
+```{r}
+library(pander)
+quantiles <- c(0, 1, 2, 3)
+percentages <- pnorm(quantiles) - pnorm(quantiles * -1)
+quantiles <- paste(quantiles, " SD")
+percentages <- paste0(round(percentages * 100,1), "%")
+df <- data.frame(quantiles, percentages)
+pandoc.table(df, style = "rmarkdown")
+
+```
+And the 2.5th, 5th, 95th and 97.5th percentiles are of the standard normal distribution are:
+
+```{r}
+percent <- c(0.025, 0.05, 0.5, 0.95, 0.975)
+quantiles <- qnorm(percent)
+percent <- paste0(round(percent * 100,1), "%")
+quantiles <- round(quantiles,2)
+df <- data.frame(percent, quantiles )
+pandoc.table(df, style = "rmarkdown")
+```
+
+## Poisson's Distribution
+
+Poisson distribution is used to model count. Esp. unbounded count or counts per unit of time (rates).
+
+* PDF: P(X = x; λ) = (λ<sup>x</sup>e<sup>-λ</sup>)/x! 
+
+For x = 0, 1, … infinity 
+
+For poisson's:
+
+* Mean: λ 
+* Variance: λ
+
+
+_Example:_
+
+The number of people that show up at a bus stop is Poisson with a mean of 2.5 per hour. Therefore over 4 hours you’d expect 10 people. 
+
+But the probability that 3 or few people show up is:
+
+```{r}
+ppois(3, lambda = 2.5 * 4) # [1] 0.01033605
+```
+
+So the probability that 3 or less people turn up in 4 hours is around 1%.
+
+Binomials (like sequence of coinflips with probability p) can be approximated by Poisson when n is large and p is small. i.e.  Where X ~ Binomial(n,p) then X is approx. Poisson where λ = np provided n is large and p is small.
+
+For example: 
+
+```{r}
+pbinom(2, size = 500, prob = 0.01) # [1] 0.1234
+ppois(2, lambda = 500 * 0.01) # [1] 0.1247
+```
+
+## Gosset T Distribution (Student)
+
+https://en.wikipedia.org/wiki/Student's_t-distribution
+
+The t-distribution is a member of the family of continuous probability distributions that arises when estimating the mean of normally distributed population. Arises in situations where:
+
+* Sample size is small
+* Population standard deviation is unknown.
+
+The t-distribution is very similar to the normal distribution, especially for higher 'degrees of freedom' V, where v = n-1.
+
+Where normal describes a full population, t-distributions describe samples. The t-distribution differs according to sample size (degrees of freedom), and gets closer to normal as size increases.
+
+```{r}
+
+k <- 100
+x <- seq(-5, 5, length = k)
+norm = dnorm(x)
+t5 <- dt(x, 5)
+t15 <- dt(x, 15)
+cnorm = pnorm(x)
+ct5 = pt(x, 5)
+ct15 = pt(x, 15)
+
+par(mfrow = c(2,1))
+plot(x, norm, type="l", col="blue", main = "T compared to Normal")
+lines(x, t15, col="red")
+lines(x, t5, col="green")
+legend("topright", c("Normal", "T DF=15", "T DF=5"), lty=c(1,1, 1), 
+    lwd=c(1,1, 1), col=c("blue","red", "green"))
+plot(x, cnorm, type="l", col="blue", main = "CDF of T compared to Normal")
+lines(x, ct15, col="red")
+lines(x, ct5, col="green")
+legend("bottomright", c("Normal", "T DF=15", "T DF=5"), lty=c(1,1, 1),
+    lwd=c(1,1, 1), col=c("blue","red", "green"))
+
+```
+
+The t-distribution is widely used, including:
+
+* t-test - assesses the significance of the difference between two sample means.
+* confidence intervals - assessing the difference between two sample means.
+* Linear regression.
+* Paired observations are often analysed using the t-interval by taking differences.

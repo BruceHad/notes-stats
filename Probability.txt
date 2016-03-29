@@ -1,0 +1,125 @@
+# Probability Theory
+
+Think of experiments with uncertain results (outcomes). The set of all possible outcomes is known as the Sample Space (S). An event E is a subset of S.
+
+e.g. casting a die:
+
+    S = {1,2,3,4,5,6}
+    E(outcome is even) = {2,4,6}
+
+## Combined Events
+
+If E & F are events then...
+
+* E' is the inverse of E (that is, the event where E does _not_ occur).
+* Union - E ∪ F is where event E or F occurs.
+* Interesection - E ∩ F is where events E and F both occur.
+* E and F are said to be mutually exclusive (aka a dsijoint) if the set E ∩ F is empty.
+
+## Estimated Probability
+
+Estimated probability is calculated from experiments.
+
+If an experiment is carried out N times (the sample size) and the event E occurs fr(E) times then:
+
+    P(E) = fr(E)/N
+
+This is known as the estimated probability (or relative frequency) of event E.
+
+* The estimated probability of any event is a number between 0 and 1.
+* The sum of probabilities of all possible outcomes will add up to 1.
+* The probability of event E is the sum of the probabilities of each outcome in the set for E.
+
+e.g. Casting a die again:
+
+    S = {1,2,3,4,5,6}
+    E(outcome is even) = {2,4,6}
+    P(E) will approad 1/6 + 1/6 + 1/6
+
+## Theoretical Probability
+
+Theoretical probability is calculated from the nature of the experiment. The estimated probability will approach the theoretical probability as N grows.
+
+In an experiment where all outcomes are equally likely:
+
+    P(E)    = No. of favourable outcomes/No. of possible outcomes
+            = n(E)/n(S)
+
+## Union
+
+If E and F are mutually exclusive the the two sets will not overlap and therefore:
+
+    P(E ∪ F) = P(E) + P(F)
+
+General principle states that:
+
+    P(E ∪ F) = P(E) + P(F) - P(E ∩ F)
+
+Therefore if E and F are mutually exclusive then P(E ∩ F) = 0
+
+## Conditional Probability
+
+Conditional Probability P(E|F) is the probability that E occurs given that F has occured. e.g. The probability that a patient has a particular disease given that they have certain symptoms.
+
+The formula states:
+    
+    P(E|F) = P(E ∩ F)/P(F)
+    P(E ∩ F) = P(E|F)P(F)
+
+For estimated probability:
+
+    P(E|F) = fr(E ∩ F)/ fr(F)
+
+And where all outcomes are equally likely:
+
+    P(E|F) = n(E ∩ F)/ n(F)
+
+Probabilities are said to be conditional where P(E|F) != P(E). The condition 'limits the domain to which the question is supposed to apply'.
+
+Conversely events are said to be independant where P(E|F) != P(E).
+
+Given any number of mutually independant events, the probability of an intersection is the product of the probabilities of each event.
+
+## Bayes Theorum
+
+Bayes Theorum (or Rule) is a simple way to calculate conditional probabilities.
+
+Simple question: There are 4 tall females, 4 short females, 3 tall males and 2 short males. What is the probability that a person is tall given they are female.
+
+    P(tall) = 7/13, P(female) = 8/13
+    P(tall ∩ female) = 4/13
+
+    P(tall | female)    = P(tall ∩ female)/P(female)
+                        = 4/13  / 8/13
+                        = 1/2
+
+### Simple Form:
+
+For two sets of mutually exclusive events E and F:
+
+    P(E|F) = P(F|E)P(E)/P(F)
+
+and as we have seen above:
+
+    P(E|F) = P(E ∩ F)/P(F)
+
+Therefore in this situation:
+
+    P(E ∩ F) = P(F|E)P(E)
+
+This may seem circular as we have to know P(F|E) in order to calculate P(E|F), but Bayes insight was that in a lot of experiments this inverted conditional probability is often known or can be calculated from experimentation.
+
+E.g. When we are trying to calculate P(Disease | Symptom) it is often know the P(Symptom | Disease).
+
+### Short Form
+
+    P(F|E) = P(E|F)P(F) / P(E|F)P(F) + P(E|F')P(E')
+
+
+
+------------
+
+* http://people.hofstra.edu/stefan_waner/RealWorld/Summary6.html
+* http://www.ualberta.ca/~chrisw/BayesForBeginners.pdf
+
+

@@ -1,0 +1,12 @@
+## References
+
+* [Statistical Inference (Coursera)](https://www.coursera.org/course/statinference)
+* [Statistical inference for data science](https://leanpub.com/LittleInferenceBook/read)
+* [Think Stats: Probability and Statistics for Programmers](http://www.greenteapress.com/thinkstats/)
+* [Probability mass function @ wikipedia](https://en.wikipedia.org/wiki/Probability_mass_function)
+* [Random variable @ wikipedia](https://en.wikipedia.org/wiki/Random_variable)
+* [Probability Distributions @ wikipedia](https://en.wikipedia.org/wiki/Probability_distribution)
+* [Asymptotic Theory](https://en.wikipedia.org/wiki/Asymptotic_theory_%28statistics%29)
+* [Central Limit Theorem](https://en.wikipedia.org/wiki/Central_limit_theorem)
+* [Cumulative Distribution Function](https://en.wikipedia.org/wiki/Cumulative_distribution_function)
+* [Central Limit Theorem @ wikipedia](https://en.wikipedia.org/wiki/Central_limit_theorem)

@@ -1,0 +1,119 @@
+# The Bootstrap
+
+_The bootstrap_ is a tool for constructing confidence intervals and calculating standard errors for difficult statistics.
+
+Imaging a die roll with a fair die.
+
+    library(ggplot2)
+    library(gridExtra)
+    nosim <- 1000
+
+    cfunc <- function(x, n) mean(x)
+    g1 = ggplot(data.frame(y = rep(1/6, 6), x = 1 : 6), aes(y = y, x = x))
+    g1 = g1 + geom_bar(stat = "identity", fill = "lightblue", colour = "black")
+    
+    dat <- data.frame(x = apply(matrix(sample(1 : 6, nosim * 50, replace = TRUE), 
+                         nosim), 1, mean))
+    g2 <- ggplot(dat, aes(x = x)) + geom_histogram(binwidth=.2, colour = "black", fill = "salmon", aes(y = ..density..)) 
+    
+    grid.arrange(g1, g2, ncol = 2)
+
+Now imagine you don't know if the die is fair, and you only have a sample of 50 die rolls, and can't roll any more. This example is closer to real data analysis.
+
+The bootstrap principle uses the empirical mass function of the data to perform the sumulation, rather than the true distribution. In other words, we simulate the averages of 50 samples from the histogram that we _observe_.
+
+With enough data the empirical distribution should be a good approximation of the true distribution, and this should result in a good approximation of the sampling distribution.
+
+Bootstrapping is carried out using simulation. 
+1. Simulate complete data sets from the observed data, with replacement. 
+2. Calculate the statistic for each simulated data set. 
+3. Use the sumulated statistics to either define a confidence interval or take the standard deviation to calculate a standard error.
+
+## Nonparametric Bootstrap Algorithm
+
+This is a procedure for calculating confidence interval for the median from a set of n observations.
+
+1. Sample n observations with replacement from the observed data, resulting ins one simulated complete data set.
+2. Take the median of the simulated data set.
+3. Repeat B times.
+4. These medians are approximately drawn from the sampling distribution of the median of n observations. Therefore we can:
+    1. Draw a histogram of them.
+    2. Calculate their standard deviation to estimate the standard error of the mean.
+    3. Take the 2.5th and 97.5th percentiles as a CI of the median.
+    
+For the general bootstrap just replace the median with whatever statistic you are investigating.
+
+_Example:_
+
+Resampling the height data:
+
+library(UsingR)
+data(father.son)
+x <- father.son$sheight
+n <- length(x)
+B <- 10000
+resamples <- matrix(sample(x, n * B,replace = TRUE), B, n)
+resampledMedians <- apply(resamples, 1, median)
+hist(resampledMedians)
+
+g = ggplot(data.frame(x = resampledMedians), aes(x = x)) 
+g = g + geom_density(size = 2, fill = "red")
+# g = g + geom_histogram(alpha = .20, binwidth=.3, colour = "black", fill = "blue", aes(y = ..density..)) 
+g = g + geom_vline(xintercept = median(x), size = 2)
+g
+
+sd(resampledMedians) # 0.0862
+quantile(medians, c(0.025, 0.975)) # 68.43 68.81
+
+Thus 0.084 estimates the standard error of the median, with CI between 68.43 and 68.81.
+
+### Summary
+
+* Bootstrap is non-parametric
+* Better percentile bootstrap confidence intervals correct for bias.
+* There are lots of variations on the bootstrap procedures.
+
+## Permutation Tests
+
+Have a look at the InsectSprays data.
+
+    data(InsectSprays)
+    head(InsectSprays)
+    
+Consider the means of two independent groups, A and B. Let's state the null hypothesis is that the labels (groups, or sprays in the example) are interchangeable. This is a handy way of creating a null distribution.
+
+1. Permute the groups (spray).
+2. Calcualate the statistic (difference in means).
+3. Repeat.
+4. Calculate the percentage of simulations where the mean was more extreme than the observed difference.
+
+_Example:_
+
+    data(InsectSprays)
+    subdata <- InsectSprays[InsectSprays$spray %in% c("B", "C"),]
+    y <- subdata$count
+    group <- as.character(subdata$spray)
+    testStat <- function(w, g) {
+        mean(w[g == "B"]) - mean(w[g == "C"])
+    }
+    observedStat <- testStat(y, group)
+    permutations <- sapply(1 : 1000, function(i){
+        testStat(y, sample(group))
+    })
+    observedStat # 13.25
+    mean(permutations > observedStat) # 0
+    
+    hist(permutations, xlim = c(-14, 14))
+    abline(v=observedStat, lwd=2)
+    
+Permuatations is the distribution means of the null hypothesis. observedStat is the mean of the observed stat. We can clearly reject the null hypothesis without looking at p-values or anything.
+
+There are known tests that are obtained by permuting group labels:
+
+Data Type   Statistic   Test Name
+Ranks       rank sum    rank sum test
+Binary      hypergeometric prob Fisher's exact test
+Raw data                Permutation test
+
+So called randomisation tests are permutation test, with a different motivation. 
+

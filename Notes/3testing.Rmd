@@ -1,0 +1,1162 @@
+# Sampling
+
+Most studies only have access to a small sample of the population data. it is therefore important to keep in mind the difference between sample estimates and population data and understand how accurate the sample is likely to be.
+
+## Asymptotics
+
+Asymptotic theory, or large sample theory, is a generic framework for assessment of estimators and statistical tests. It’s assumed that the sample size n grows indefinitely, and the properties of statistical procedures are evaluated in the limit n → ∞.
+
+Most stats problems begin with dataset of size n. Asymptotic theory assumes that this can increase towards infinity. Under this assumption, results can be obtained that are unavailable for finite data sets.
+
+## Law of Large Numbers
+
+The law of large numbers states that the sample average approaches the population mean (expectation) as n → ∞. (data have to be iid).
+
+This law can be simulated:
+
+    n <- 10000
+    means <- cumsum(rnorm(n))/(1:n)
+    library(ggplot2)
+    g <- ggplot(data.frame(x = 1:n, y = means), aes(x = x, y = y))
+    g <- g + geom_hline(yintercept = 0) + geom_line(size = 2)
+    g <- g + labs(x = "Number of obs", y = "Cumulative mean")
+    g
+
+An estimate is called consistent if it converges on what you want to estimate. So the lln says the sample mean is consistent with the population mean. The sample variance and sample SD are consistent as well.
+
+## Sample Variance
+
+As discussed already, there is a slight difference between population variance and sample variance. Like other measures, sample variance _estimates_ the population variance. The population variance is the mean square deviation from the mean.
+
+The sample variance is similar (except it is divided by n-1 instead of n).
+
+> S**2 = sum(Xi - x̄)**2/n-1
+    
+The sample value is an estimate of what the population value would be if we were able to measure it. So the sample mean estimates the population mean and sample variance estimates population variance. But the quality of the estimate will vary. 
+
+## Sample Means
+
+Now the mean of a small sample is itself a _random variable_. 
+
+Now imagine repeatedly sampling the population and taking note of the some measure (e.g. the mean). You now have a set of data that you can plot, showing the sample _distribution_. Knowing about this distribution helps us assess the estimate of the population mean, even if we only have one sample.
+
+The distribution of the sample means has the same expected value (mean) as the population mean. It's unbiased.
+
+For example we can simulate 1000 random normals, and compare to 1000 means of 10 random normals, and 1000 means of 100 random normals.
+
+```{r}
+
+library(ggplot2)
+nosim <- 10000; n <- 10; n2 = 100;
+dat <- data.frame(
+    x = c(rnorm(nosim), 
+        apply(matrix(rnorm(nosim * n), nosim), 1, mean),
+        apply(matrix(rnorm(nosim * n2), nosim), 1, mean)),
+    what = factor(rep(c("Obs", "Mean 10", "Mean 100"), c(nosim, nosim, nosim))) 
+    )
+ggplot(dat, aes(x = x, fill = what)) + geom_density(size = 1, alpha = .1);
+
+```
+    
+Note that the plots are centered at the same point. The variance of the sample distributions is a lot less and the larger the sample size, the less the variance.
+
+We can do a similar exercise with die rolls.
+
+```{r}
+library(ggplot2)
+dat <- data.frame(
+  x = c(sample(1 : 6, nosim, replace = TRUE),
+        apply(matrix(sample(1 : 6, nosim * 2, replace = TRUE), 
+                     nosim), 1, mean),
+        apply(matrix(sample(1 : 6, nosim * 3, replace = TRUE), 
+                     nosim), 1, mean),
+        apply(matrix(sample(1 : 6, nosim * 4, replace = TRUE), 
+                     nosim), 1, mean)
+        ),
+  size = factor(rep(1 : 4, rep(nosim, 4))))
+g <- ggplot(dat, aes(x = x, fill = size)) + geom_histogram(alpha = .20, binwidth=.25, colour = "black") 
+g + facet_grid(. ~ size)
+```
+
+The distribution of sample variance is also centred around the population variance. And the variance of the sample variances gets lower, with higher values of n.
+
+As an example, we can simulation a collection of standard normals and taking a sample of the _variances_ instead of the means.
+
+```{r}
+
+library(ggplot2)
+nosim <- 10000; 
+dat <- data.frame(
+    x = c(apply(matrix(rnorm(nosim * 10), nosim), 1, var),
+          apply(matrix(rnorm(nosim * 20), nosim), 1, var),
+          apply(matrix(rnorm(nosim * 30), nosim), 1, var)),
+    n = factor(rep(c("10", "20", "30"), c(nosim, nosim, nosim))) 
+    )
+ggplot(dat, aes(x = x, fill = n)) + geom_density(size = 2, alpha = .2) + geom_vline(xintercept = 1, size = 2)
+```
+
+These histograms of sample variances are centred around 1 (the SD for Standard Normal distribution). Also note the larger the sample size, the less the variance of the distribution.
+
+And we can sample the variances for a die roll:
+
+```{r}
+
+    dat <- data.frame(
+      x = c(apply(matrix(sample(1 : 6, nosim * 10, replace = TRUE), 
+                         nosim), 1, var),
+            apply(matrix(sample(1 : 6, nosim * 20, replace = TRUE), 
+                         nosim), 1, var),
+            apply(matrix(sample(1 : 6, nosim * 30, replace = TRUE), 
+                         nosim), 1, var)
+            ),
+      size = factor(rep(c(10, 20, 30), rep(nosim, 3))))
+    g <- ggplot(dat, aes(x = x, fill = size)) + geom_histogram(alpha = .20, binwidth=.3, colour = "black") 
+    g <- g + geom_vline(xintercept = 2.92, size = 2)
+    g + facet_grid(. ~ size)
+```
+
+
+## The Central Limit Theorem
+
+Basically, the means of a large number of iterates of iids, will be approximately normally distributed, regardless of the underlying distribution.
+
+We can calculate the mean and SD of the distribution of averages. CLT gives us the full distribution. Thus we have a good estimate of the distribution of the average event, even though we only observe one average and don’t know what the population distribution is.
+
+The standard error of the mean (SEM) is the SD of those sample means over all possible samples of a given size, drawn from the population. The term may also refer to an estimate of that standard deviation, derived from a particular sample.
+
+As discussed, the distribution of sample means is centred around the population mean and variance of the sample means is the variance of the population divided by the number of samples:
+
+> Var(x̄) = σ<sup>2</sup>/n 
+> SE = sqrt(Var(x̄)) = σ/sqrt(n)  
+    
+## Simulating CLT
+
+We can simulate the theory to see how close it is to reality.
+
+### SE
+
+```{r}
+nosim <- 1000
+n <- 10
+## simulate nosim averages of 10 standard normals
+sd(apply(matrix(rnorm(nosim * n), nosim), 1, mean)) # [1] 0.3156
+## Let's check to make sure that this is sigma / sqrt(n)
+1 / sqrt(n) # [1] 0.3162
+```
+
+### Uniform
+
+Standard Uniforms have variance 1/12. A sample of n variables will have a sample variance of σ<sup>2</sup>/n = 1/12n and an SD = 1/sqrt(12n).
+
+So we should be able to see this in action:
+```{r}
+nosim <- 1000
+n <- 10
+sample_means <- apply(matrix(runif(nosim * n), nosim), 1, mean)
+mysd <- sd(sample_means)
+calculated_sd <- 1/sqrt(12 * n)
+mysd; calculated_sd; # [1] 0.0901578 [1] 0.09128709
+```
+
+### Poisson 
+
+A poisson(4) distribution should have a variance of 4. i.e. variance = lambda. So SD = sqrt(4/n).
+
+```{r}
+nosim <- 1000
+n <- 10
+lambda <- 4
+sample_means <- apply(matrix(rpois(nosim * n, lambda), nosim), 1, mean)
+mysd <- sd(sample_means)
+calculated_sd <- sqrt(lambda/n)
+mysd; calculated_sd; # [1] 0.6398066 [1] 0.6324555
+```
+
+### Binomial
+
+For a binomial variance is p(1 - p). So the sample SD will be sqrt(p(1-p)/n).
+
+```{r}
+    nosim = 1000
+    n = 10
+    p = 0.5
+    sample_means <- apply(matrix(sample(0:1, nosim * n, replace = TRUE, prob = c(0.5, 0.5)), nosim), 1, mean)
+    mysd = sd(sample_means)
+    calculated_sd = sqrt((p * (1 - p))/n)
+    mysd; calculated_sd; # [1] 0.152818 [1] 0.1581139
+```    
+
+### Normal
+
+In this example we use real data and assess the accuracy of the sample. We can plot a histogram for a sample of around 1000 heights. This is a fairly _normal_ distribution.
+
+```{r}
+
+library(UsingR)
+data(father.son)
+x <- father.son$sheight
+n<-length(x)
+myhist <- hist(x)
+multiplier <- myhist$counts / myhist$density
+
+myx <- seq(min(x), max(x), length.out = 100)
+mymean <- mean(x)
+mysd <- sd(x)
+mynormal <- dnorm(x = myx, mean = mymean, sd = mysd)
+lines(myx, mynormal*multiplier)
+```
+
+Now we can calculated the variance and sd of the sample.
+
+```{r}
+
+var(x); sd(x); # [1] 7.922545 [1] 2.814702
+
+```
+
+And the sample variance and sample SD of the sample distribution.
+
+```{r}
+
+    var(x)/n; sd(x)/sqrt(n);
+    #[1] 0.0073493 [1] 0.08572806
+```
+    
+The first tells us something about heights of the population. The second tells us something about how accurate our sample is.
+
+## Simulating the CLT
+
+*** come back to this ***
+
+Simulating n die rolls where Xi is the outcome for die i.
+
+mean μ  = E[X] = (1 + 2 + 3 + 4 + 5 + 6) / 6 = 3.5
+Variance σ<sup>2</sup> = Var(X)  = E[X**2] - E[X]**2
+        = 15.17 - 12.25 = 2.92
+So SE = sqrt(σ<sup>2</sup>/n) = sqrt(2.92/n)
+
+```{r}
+nosims <- 1000
+mymean <- 3.5
+mysd <- sqrt(2.92/n)
+
+par(mfrow = c(1,3))
+
+for (n in c(10, 20, 30)){
+    sample_means <- apply(matrix(sample(1:6, n*nosims, replace = TRUE), nosims), 1, mean)
+    sample_means = (sample_means - mymean)/mysd
+    myhist <- hist(
+        sample_means, 
+        breaks = seq(min(sample_means),max(sample_means),length.out = 12),
+        main = NULL
+        )
+    multiplier <- myhist$counts / myhist$density
+    myx <- seq(-3,3, length.out = 100)
+    normal <- dnorm(myx)
+    lines(myx, normal * 150)
+}
+
+nosim <- 1000
+cfunc <- function(x, n) sqrt(n) * (mean(x) - 3.5) / 1.71
+dat <- data.frame(
+  x = c(apply(matrix(sample(1 : 6, nosim * 10, replace = TRUE), 
+                     nosim), 1, cfunc, 10),
+        apply(matrix(sample(1 : 6, nosim * 20, replace = TRUE), 
+                     nosim), 1, cfunc, 20),
+        apply(matrix(sample(1 : 6, nosim * 30, replace = TRUE), 
+                     nosim), 1, cfunc, 30)
+        ),
+  size = factor(rep(c(10, 20, 30), rep(nosim, 3))))
+g <- ggplot(dat, aes(x = x, fill = size)) + geom_histogram(alpha = .20, binwidth=.3, colour = "black", aes(y = ..density..)) 
+g <- g + stat_function(fun = dnorm, size = 2)
+g + facet_grid(. ~ size)
+
+```
+
+## Summary
+
+* Expected values are properties of distributions.
+* The population mean is the centre of mass of the population and the sample mean is the centre of mass of the observed data.
+* The sample mean is unbiased, the population mean of it's sample distribution is the mean that it's trying to estimate.
+* The more data that goes into the sample mean, the more concentrated it gets around the population mean.
+* The sample variance estimates the population variance s<sup>2</sup>.
+* The distribution of the sample variance is centred around the SD σ<sup>2</sup>.
+* The variance of the sample mean is pop variance/n - σ<sup>2</sup>/n. It's logical estimate is the sample variance/n s<sup>2</sup>/n. Therefore the logical estimate of the standard error is S/sqrt(n).
+* Where S, the standard deviation, talks about how variable the population is. SE S/sqrt(n) talks about how variable the means of random samples of size n are.
+* The sample variance estimates the population variance.
+* The distribution of the sample variance is centred at the population variance and it gets more concentrated as sample sizes increase.
+* The variance of the sample mean is the population variance/n. The Standard Error SE is the square root of the variance.
+* Knowing all this, means we can tell how good a sample is, even with only one sample.
+* The law of large numbers states that the sample average approaches the population mean (expectation) as n → ∞.
+* The central limit theorem states that the means of a large number of samples of a distribution will be Normally distributed, regardless of the underlying distribution of the data.
+* Since we know the sample SD and sample Mean, we can plot the normal distribution of the sample data.
+* The law of large numbers states that averages of iid samples converge to the population means that they are estimating.
+* The Central Limit Theorem states that averages are approximately normal with distributions centered on population mean, with SD equal to the standard error of the mean SE (σ/sqrt(n))
+
+# Confidence Intervals
+
+Confidence intervals are methods for quantifying _uncertainty in our estimates_. They are constructed using the CLT. Remember that we are assessing the quality of our sample, therefore we have to convert to sample means.
+
+The sample means X-bar is approximately normal with mean μ and standard deviation σ/sqrt(n).
+
+Now remember the approximations for normal distribution:
+
+* 68% of population - 1 standard deviation
+* 95% of population - 2 standard deviations
+* 99% of population - 3 standard deviations
+
+For a standard normal:
+
+* -1.28 SD = 10th percentile & 1.28 SD = 90th percentile
+* -1.645 SD = 5th percentile & 1.645 SD = 95th percentile
+* -1.96 SD = 2.5th percentile & 1.96 = 97.5th percentile
+* -2.33 - 1st percentile & 2.33 = 99th percentile
+
+So if you've taken a sample of 100 measures, which estimate the mean of the population. According to the CLT the distribution of multiple means is normal, with mean centred around the mean of the population, and SE of SD/sqrt(100).
+
+You can therefore state the confidence interval of your estimate as the mean, plus and minus the standard normal quantile times the standard deviation of your sample means. e.g.
+
+> CI = μ +/- qnorm * S
+    
+Where S = σ/sqrt(n) as we are talking about sample means.
+
+The 95% interval is the bit between the 2.5th and the 97.5th percentile, which is approximately 2SDs from the mean.
+
+For our sample mean, the SE = σ/sqrt(n). So 95% of the population will fall between: 
+    μ +/- 2SE 
+    = μ +/- 2σ/sqrt(n) 
+
+In other words the probability that x̄ is outwith 2 SD (2σ/sqrt(n)) is 5%.
+
+If you want to be exact, the 97.5 percentile is 1.96SDs not 2.
+
+> qnorm(.975) = 1.96
+
+If instead you want the 90% interval then you want (100-90)/2 = 5% to 95%, which is 1.645SDs.
+
+* pnorm - returns the Cumulative Distribution Function. The CDF of a random variable X returns the probability that the random variable is less than or equal to the variable value x. 
+* qnorm - takes the probability and returns the quantile. Inverse cumulative density function
+
+_Example:_
+
+From the height data get a set of heights:
+
+```{r}
+library(UsingR)
+data(father.son)
+x <- father.son$sheight
+myhist <- hist(x)
+multiplier <- myhist$counts/myhist$density
+mean_height <- mean(x) # 68.68407
+sd_height <- sd(x) # 2.814
+myx <- seq(min(x),max(x), length.out = 100)
+normal <- dnorm(myx, mean = mean_height, sd = sd_height)
+lines(myx, normal * multiplier[1])
+abline(v = c(mean(x)-sd(x), mean(x), mean(x)+sd(x)), lty = c(2,1,2))
+```
+
+This gives us a distribution of data that is approximately normal with a mean of 68.7 inches and a SD of 2.8 inches. 
+
+Since this is just a sample of heights, from a wider population, just how confident are we that it is correct.
+
+We can calculate the 95% confident interval for the mean by using the sample distribution. The sample distribution is normal, centred on the mean and has a standard deviation SE of σ/sqrt(n).
+
+```{r}
+n <- length(x)
+m <- mean(x)
+se <- sd(x)/sqrt(n)
+quantile <- qnorm(0.975) # 1.959964
+range = m + c(-1, 1) * quantile * se
+range # [1] 68.51605 68.85209
+```
+So we can state the the mean height for our sample is 68.7 inches, and that we are 95% confident that the mean of the population is between 68.5 and 68.9 inches.
+
+## CI for Binomial Distributions
+
+For binomial distribution with probability p, and mean p we have seen σ<sup>2</sup> = p(1 - p). Then the interval take the form:
+
+>p-hat +- Z1 - α/2 * sqrt(p(1 - p)/n)
+
+However p-hat +- 1/sqrt(n) will give a decent approximation for 95% interval.
+
+I think p-hat is the sample proportion, i.e. 56% of the voters.
+
+_Example:_
+
+In a random sample of 100 votes, 56% intend to vote for you. How precise is this estimate?
+
+```{r}
+p = 0.56
+p + c(-1, 1) * 1/sqrt(100)
+```
+So the sample tells us that 56% intent to vote for you, but we can only say with 95% confidence that between 46% and 66%.
+
+## CI for Poisson
+
+If X ~ Poisson(λt) then the estimate for λ is X/t.
+
+So our Poisson interval is:
+
+    λ-hat +- Z1 - α/2 * sqrt(λ-hat/t)
+
+A nuclear pump failed 5 times out of 94.32 days. Give a 95% confidence interval for the failure rate per day.
+
+    x <- 5
+    t <- 94.32
+    lambda <- x/t
+
+    round(lambda + c(-1, 1) * qnorm(0.975) * sqrt(lambda/t), 3)
+    # [1] 0.007 0.099
+    
+The code for the exact confidence interval:
+
+    poisson.test(x, T = 94.32)$conf
+    # [1] 0.01721 0.12371
+
+## CI for T Distribution
+
+Similar to the CI for the normal distribution, we can calculate the CI using the T distribution.
+
+Where in 
+
+```{r}
+
+n <- 100
+x <- seq(-5, 5, length = n)
+norm = dnorm(x)
+t5 <- dt(x, n-1)
+nci <- qnorm(0.975) # 1.959964
+tci = qt(0.975, df = n-1) # 1.984217 
+
+
+par(mfrow = c(2,1))
+plot(x, norm, type="l", col="blue", main = "Normal")
+abline(v = 0 + c(1, -1) * nci)
+plot(x, t5, type="l", col="blue", main = "T Distribution")
+abline(v = 0 + c(-1, 1) * tci)
+
+```
+
+Note again how similar these are.
+
+These tests apply to 'sample' distributions, so...
+
+If we take a sample of n observations from a normal distribution, degrees of freedom v = n-1 can be defined as the distribution of the location of the true mean, relative to the sample mean and divided by the sample standard deviation, after multiplying by sqrt(n). In this way, we can estimate how likely the true mean lies in a range.
+
+    # (X-bar - μ) / (SE/sqrt(n)) This has n-1 degrees of freedom. 
+    
+So the confidence interval for the t-distribution is:
+
+    X +/- tv * SD/sqrt(n) # tv is tn-1, the quantile from the t-distribution given by qt() function.
+    
+### Summary
+
+* Taking the mean and and adding and subtracting the relevant normal quantile times the SE yields a confidence interval for the mean. Adding and subtracting 2 SEs works for 95% intervals.
+* Confidence intervals get wider as coverage increased.
+* Confidence intervals get narrower with less variability or larger sample sizes.
+* The poisson and binomial case have exact intervals that don’t require CLT.
+    
+    
+
+# Hypothesis Testing
+
+Classic hypothesis testing is concerned with deciding between two decisions.
+
+Null hypothesis assumes the status quo. Labelled H0
+
+Alternative/Research hypothesis is what we require evidence to conclude. Ha or H1.
+
+Alternative hypotheses are typically of the form of the true mean being > or < or != to the hypothesised mean.
+
+There are four possible outcomes to the test:
+
+Truth   Decide  Result
+H0      H0      Correctly accept null
+H0      Ha      Type I error (false positive α)
+Ha      Ha      Correctly reject null
+Ha      H0      Type II error (false negative β)
+
+Consider a court case. Null is the hypothesis that the defendant is innocent. If the standard of proof required is low, there is an increased chance of getting a type i error (convicting an innocent). However it would also increase the number of guilty people convicted. If the standard is high, then we increase the number of innocent people acquitted, but also increase the type ii errors.
+
+In hypothesis testing, that standard of proof is set quite high, 95% generally, so that if we decide to reject the hypothesis (convict), there is only a 5% chance of a Type I error.
+
+_Summary_:
+
+If the hypothesis states the mean is μ0, and the n samples has a mean of μ and standard deviation σ. Then the sample distribtion is centred around μ and has an SE of σ/sqrt(n). 
+
+If μ0 is outwith 95% confidence interval of the sample distribution, the hypothesis is rejected. 
+
+So for a two-sided test, of a normal distribution, the hypothesis is rejected if:
+
+    |μ - μ0)| > qnorm(0.975) * SE
+    
+e.g. In our example below, 100 samples the mean is 32 with a SD of 10. H0 = 30
+
+    2 > qnorm(0.975) * 10/sqrt(100)
+    [1] TRUE # 1.959964 > 2
+
+Another way of putting it:
+
+    |μ - μ0|/SE > qnorm(0.975)
+
+So:
+    2/(10/sqrt(100)) > qnorm(0.975)
+    # [1] TRUE
+
+(μ - μ0)/SE is known as the Z-score and shows how many standard errors the sample is above the hypothesised mean.
+
+    Z = (μ - μ0)/(s/sqrt(n)) =  (μ - μ0)/SE
+    
+General rules:
+    
+Consider the Z test for H0:
+
+* H0: μ = μ0
+* H1: μ < μ0
+* H2: μ != μ0
+* H3: μ > u0
+
+For our test statistic TS = (X-bar-μ0)/(S/sqrt(n)), we reject the null hypothesis when:
+
+H1: TS <= Zα = -Z1-α
+H2: |TS| >= Z(1-α/2)
+H3: TS >= Z1-α
+
+_Example:_
+
+A respiritory disturbance of more than 30 events per hour is considered evidence of sleep disorder. Suppose a sample of 100 overweight subjects the mean was 32 events per hour, SD of 10 events per hour.
+
+So the null hypothesis H0 is that μ is 30. We could state the alternative hypothesis that μ > 30.
+
+We could decide to reject H0 if the sample mean was greater than a constant C where C is chosen so that the probability of a type i error (α) is 0.05.
+
+Lets calculate C:
+
+    mean <- 30
+    n <- 100; s <- 10;
+    se <- s/sqrt(n) # se = 1
+    # Remember x-bar is approximately normal. And the 95th percentile is 1.645 SD from the mean.
+    C <- mean + 1.645 #31.645
+    
+So C is 31.645. We can state that if X-bar >= 31.645 then reject the null hypothesis that X-bar = 30, with confidence that there is less than 5% chance the H0 is true.
+
+Don't have to convert C back to the original scale, just leave it as an SD.
+
+    Z = (X-bar - μ0)/(s/sqrt(n)) =  X-bar - μ0/SE
+    
+This is called the Z-score. We can compare the Z-score to standard normal quantiles. The Z-score is how many standard errors the sample is above the hypothesised mean.
+
+From our example:
+
+    Z = (32 - 30)/se = 2
+    
+So the z-score is 2, which is greater that 1.645. Basically we can set a rule that we reject H0 if Z-score is greater than 1.645 (95th percentile). Generally, reject when:
+
+    sqrt(n) * (X-bar - μ0)/s > Z1-α (α = 0.05 so 1-α = 0.95)
+    
+# P-Values
+
+# Statistical Power (Sensitivity)
+
+Remember the four different types of results.
+
+True Value  Assessed Value
+H0          H0              Accept the null hypothesis
+H0          Ha              Reject null, when it's true. Type I error, false positive.
+Ha          Ha              Reject null
+Ha          H0              Accept the null, when it's false. Type II error.
+
+So far, we have been trying to minimise the Type I errors by using relatively high standard before reject. i.e. only rejecting if there is less the 5% probability that the stat is wrong.
+
+However, the higher the standard, the more likely you are to get type II errors, failing to reject the null hypothesis when it is false. The probability of a type II error is β.
+
+Power (1-β) is the probability of rejecting the null hypothesis when it is false. The the larger the Power better.
+
+Take a hypothesis test where H0: μ = 30 v Ha: μ > 30. Power is 
+
+    P((X-bar - μ)/ s/sqrt(n) > t of 1-α; n-1; μ = μa)
+
+_Note:_ this function depend on the specific value of μa, and as μa approaches μ, the power approaches α.
+
+Or we can say, reject if:
+
+    Z = (X-bar - 30)/ (σ / sqrt(n)) > Z of 1-α
+    
+Or equivalently, if:
+
+    X-bar > 30 + Zof 1-α * σ / sqrt(n)
+
+_Note:_ Under H0: X-bar is approximately normal N(μ0, σ**2/n). However under Ha: X-bar is approximately normal N(μa, σ**2/n)
+
+_Example_:
+
+H0: mean of 30, while h1: mean of 32, sd of 4 and n of 16.
+
+    mu0 = 30
+    mua = 32
+    sigma = 4
+    n = 16
+
+If we want a confidence interval of 95%, i.e. probability of rejection = 5%.
+
+    alpha = 0.05
+    z = qnorm(1 - alpha)
+
+If we plug in the mean of 30 (μ0) into our equation, the probability of rejection comes out at 5%, as per design.
+
+    pnorm(mu0 + z * sigma/sqrt(n), mean = mu0, sd = sigma/sqrt(n), lower.tail = FALSE) # 0.05
+
+But if we plug in μa, the probability of reject rises to 64%. I.e. the probability of rejection when the true value of the mean is 32, is 64%.
+
+    pnorm(mu0 + z * sigma/sqrt(n), mean = mua, sd = sigma/sqrt(n), lower.tail = FALSE) # 0.63876
+    
+Now we can try plotting the power curve, for multiple values of n.
+
+    library(ggplot2)
+    nseq = c(8, 16, 32, 64, 128)
+    mua = seq(30, 35, by = 0.1)
+    z = qnorm(.95)
+    power = sapply(nseq, function(n)
+    pnorm(mu0 + z * sigma / sqrt(n), mean = mua, sd = sigma / sqrt(n), 
+              lower.tail = FALSE)
+        )
+    colnames(power) <- paste("n", nseq, sep = "")
+    d <- data.frame(mua, power)
+    library(reshape2)
+    d2 <- melt(d, id.vars = "mua")
+    names(d2) <- c("mua", "n", "power")    
+    g <- ggplot(d2, aes(x = mua, y = power, col = n)) + geom_line(size = 2)
+    g 
+
+### T-test Power
+
+For a gossets t test, n = 16, the power is the same as above:
+
+    P((X-bar - μ)/ s/sqrt(n) > t of 1-α; n-1; μ = μa)
+    
+Calculating the requires the _non-central t distribution_. But power.t.test does this for us in R. Omit any one of the arguments and it solves.
+
+_Example:_
+
+```{r}
+
+# omitting the power and getting a power estimate
+power.t.test(n = 16, delta = 2/4, sd = 1, type = "one.sample", alt = "one.sided")$power #[1] 0.604
+# illustrating that it depends only on the effect size, delta sd
+power.t.test(n = 16, delta = 2, sd = 4, type = "one.sample", alt = "one.sided")$power #[1] 0.604
+# same thing again
+power.t.test(n = 16, delta = 100, sd = 200, type = "one.sample", alt = "one.sided")$power #[1] 0.604
+# specifying the power and getting n
+power.t.test(power = 0.8, delta = 2/4, sd = 1, type = "one.sample", alt = "one.sided")$n #[1] 26.14
+# again illustrating that the effect size is all that matters
+power.t.test(power = 0.8, delta = 2, sd = 4, type = "one.sample", alt = "one.sided")$n #[1] 26.14
+# again illustrating that the effect size is all that matters
+power.t.test(power = 0.8, delta = 100, sd = 200, type = "one.sample", alt = "one.sided")$n #[1] 26.14
+```
+
+# Power II
+
+https://en.wikipedia.org/wiki/Statistical_power
+
+The power (sensitivity, π) of a binary hypothesis test is the probability that the test correctly rejects the null hypothesis.
+
+    power   = P(reject H0 | Ha is true)
+            = P(Ha chosen| Ha)
+
+As the power increases there is a decreasing change of a type II error (false negative). So it's the inverse of the false negative rate (β) so the power is equal to 1 - β.
+
+Uses:
+
+* Help calculate the minimum sample size required, so that one can be reasonable likely to detect and effect of a given size. e.g. How many times do I need to toss a coin to conclude that it is rigged.
+* Calculate the minimum effect size that is likely to be detected in a study using a given sample size.
+* Making comparisons between different statistical testing procedures, like comparing parametric and nonparametric test of the same hypothesis.
+
+Statistical tests use data from sample to make inferences about population. In a two sample comparison the aim is to assess whether the mean value in two sub-populations differ. The null hypothesis states that they do not. If a statistically significant difference is found between the two sub-populations is found, the null hypothesis is rejected.
+
+The _power_ of the test is the probability that the test will find a statistically significant difference, as a function of the size of the true difference between the two populations.
+
+Power is influenced by:
+
+* The statistical significance criterion used in the test (e.g. p >= 0.05).
+* The magnitude of the effect of interest in the population.
+* The sample size.
+* Precision/reduced measurement error increases the power.
+
+The power is increased (β is lowered) if the the criterion is lowered, but it is more likely to find false positives (α is increased).
+
+The magnitude of effect can be a direct estimate of the quantity of interest (e.g. X-bar - Y-bar) or it can be a standardised measure to take the variability into account (e.g. (X-bar - Y-bar)/σ).
+
+Often π = 0.8 is used as the standard for adequacy when measuring power of a test. So 0.2 and 0.05 are conventional values for β and α. However medical tests are often designed so that there are no false negatives on the basis that it is better to tell a patient 'more tests are required' than 'all is well'.
+
+_Example_:
+
+Suppose an experiment tests the effect of a drug on sleep, by comparing the results on the same subjects using different treatments. This can be tested using a paired t-test.
+
+Let Ai and Bi denote the pre and post treatment results. The effect Di = Bi - Ai.
+
+```{r}
+
+data(sleep)
+Ai <- sleep$extra[1 : 10] # group 1
+Bi <- sleep$extra[11 : 20] # group 2
+Di <- Bi - Ai
+mn <- mean(Di);
+s <- sd(Di);
+n <- 10
+
+# We can calculate the 95% t confidence interval manually.
+
+mn + c(-1, 1) * qt(.975, n-1) * s / sqrt(n)
+# [1] 0.7001142 2.4598858
+t.test(Bi, Ai, paired = TRUE)
+
+```
+
+(Re-do t-testing before continuing.)
+
+More reading: Parametric and non-parametric testing.
+
+## T Tests & More Confidence Intervals
+
+A t-test is a statistical hypothesis test in which the test statistic follows a Student/Gosset t-distribution.
+
+It can be used to determine if two sets of data are significantly different from each other and is most commonly applied when the test statistics would follow a normal distribution if the value of a scaling term in the test statistic were known.
+
+?What is this scaling term, the population standard deviation?
+ 
+_Example:_
+
+The sleep data describes the effect of certain groups of drugs on sleep for the same individuals.
+
+```{r}
+    library(ggplot2)
+    data(sleep)
+    sleep
+    sleep_subset <- subset(sleep, ID %in% c(1,2,3))
+    g <- ggplot(sleep_subset, aes(x = group, y = extra, group = factor(ID)))
+    g <- g + geom_line(size = 1, aes(colour = ID)) + geom_point(size =10, pch = 21, fill = "salmon", alpha = .5)
+    g
+```
+We can use a _paired_ t interval calculation here because we are comparing dependent groups.
+
+This following are different methods of calculating the the t-interval:
+
+```{r}
+    # Basic data
+    data(sleep)
+    g1 <- sleep$extra[1:10] # group 1
+    g2 <- sleep$extra[11:20] # group 2
+    difference <- g2 - g1
+    difference
+    mn <- mean(difference); 
+    s <- sd(difference); 
+    n <- 10
+```
+We can calculate the 95% t confidence interval manually.
+
+```{r}
+    mn + c(-1, 1) * qt(.975, n-1) * s / sqrt(n)
+    # [1] 0.7001142 2.4598858
+```
+
+We can alse use the t.test function.
+
+```{r}
+    t.test(difference)$conf
+    # [1] 0.7001142 2.4598858
+```
+
+Or using the same function, setting the data to paired:
+
+```{r}
+    t.test(g2, g1, paired = TRUE)$conf
+    # [1] 0.7001142 2.4598858
+```
+
+And finally:
+
+```{r}
+    t.test(extra ~ I(relevel(group, 2)), paired = TRUE, data = sleep)$conf
+    # [1] 0.7001142 2.4598858
+```
+
+Note, these are all identical. 
+
+So we can be 95% confident that the mean change is between 0.7 and 2.5 hours sleep.
+
+### Independent Group T Confidence Intervals
+
+Comparing blood pressure between two groups in randomised trial (one group receiving treatment and the other receiving a placebo). Randomisation helps balance unobserved covariates that might skew the results.
+
+Cannot use the paired t interval because the two groups are independent, so we need a method for comparing independent groups.
+
+The pooled variance estimator is for groups x and y:
+
+    Sp**2 = ((nx-1)Sx**2 + (ny -1)Sy**2)/(nx + ny -2)
+
+The pooled standard deviation estimator (Sp) is the square root of the variance above.
+
+The standard error of the mean difference (SEMD):
+
+    Sp * sqrt(1/nx + 1/ny)
+    
+And the confidence interval for the mean difference is defined as:
+
+    Y-bar - X-bar +/ qt(1-α, nx + ny-2) * SEMD
+
+Example:
+
+Let's try treating the sleep data as if it were independent.
+
+    data(sleep)
+    g1 <- sleep$extra[1 : 10]
+    n1 <- length(g1)
+    g2 <- sleep$extra[11 : 20]
+    n2 <- length(g2)
+
+    sp <- sqrt( ((n1 - 1) * sd(g1)**2 + (n2-1) * sd(g2)**2)/ (n1 + n2 - 2))
+    md <- mean(g2) - mean(g1) # mean of the differences
+    semd <- sp * sqrt(1 / n1 + 1/n2) # standard error of mean difference
+    ci <- md + c(-1, 1) * qt(.975, n1 + n2 - 2) * semd
+    ci
+
+We can compare manual results with built in t.test function, and with paired results:
+
+    rbind(
+      md + c(-1, 1) * qt(.975, n1 + n2 - 2) * semd,  
+      t.test(g2, g1, paired = FALSE, var.equal = TRUE)$conf,
+      t.test(g2, g1, paired = TRUE)$conf
+    )
+    [1,] -0.2038740 3.363874
+    [2,] -0.2038740 3.363874
+    [3,]  0.7001142 2.459886
+
+Note the paired t-test is entirely above zero, while (incorrectly) treating them as independent groups doesn't.
+
+### Summary
+
+* The t interval assumes the data are iid normal.
+* It works well when data is roughly symmetric and mound shaped. Assumes normality, but robust to this assumption.
+* For large degrees of freedom, t quantiles become the same a standard normal quantiles.
+* Not so good for skewd distributions or highly discrete  distributions.
+* The t distribution is good for small sample size comparisons.
+
+### Exercises
+
+Load the data set mtcars in the datasets R package. Calculate a 95% confidence interval to the nearest MPG for the variable mpg.
+
+    n <- length(mtcars$mpg)
+    mean(mtcars$mpg) + c(-1,1) * qt(0.975, n-1) * sd(mtcars$mpg)/sqrt(n)
+    t.test(mtcars$mpg)$conf.int
+    # [1] 17.91768 22.26357
+    
+Suppose that standard deviation of 9 paired differences is 1. What value would the average difference have to be so that the lower endpoint of a 95% students t confidence interval touches zero?
+
+    n <- 9
+    s <- 1
+    c(-1, 1) * qt(0.975, n-1) * s/sqrt(n)
+    # [1] -0.768668  0.768668
+    # So mean would have to be around 0.77
+
+Consider the mtcars dataset. Construct a 95% T interval for MPG comparing 4 to 6 cylinder cars (subtracting in the order of 4 - 6) assume a constant variance.
+
+    cars1 <- mtcars[mtcars$cyl == "6", c("mpg")]
+    n1 <- length(cars1)
+    cars2 <- mtcars[mtcars$cyl == "4", c("mpg")]
+    n2 <- length(cars2)
+    sp <- sqrt( ((n1 - 1) * sd(cars1)**2 + (n2-1) * sd(cars2)**2)/ (n1 + n2 - 2))
+    md <- mean(cars2) - mean(cars1) # mean of the differences
+    semd <- sp * sqrt(1 / n1 + 1/n2) # standard error of mean difference
+    ci <- md + c(-1, 1) * qt(.975, n1 + n2 - 2) * semd
+    ci
+
+
+
+    
+# Using the T-Distribution
+
+The t-distribution should be used if n is small. And since it approaches the normal for large values of n, it's appropriate to use it for those too.
+    
+Now consider that n = 16 rather than 100. This is a low number of samples, so perhaps the t-distribution is more appropriate.
+
+(x-bar - 30)/(s/sqrt(16)) follows the t-distribution with (n-1) 15 degrees of freedom under H0.
+
+This time we are using the t-distribution so the 95th percentile of the t-distribution qt(.95, 15) = 1.7531:
+
+    mn <- 32
+    n <- 16
+    s <- 10
+    mn + c(-1, 1) * qt(.95, n-1) * s /sqrt(n)
+    # [1] 27.61737 36.38263
+
+So the true mean (30) is within 1.75SDs from the sample mean, so we can't reject H0.
+
+Another way we can do this is calculate the quintile of 30 in relation to the t-distribution centred on 32:
+
+    sqrt(n) * (mn - 30)/s
+    # 0.8
+
+Since 0.8 is smaller than 1.75, we reject H0.
+
+### Two Sided Tests
+
+We will often want to test if the true mean greater than OR less than the hypothesised mean. If we want to reject H0 in a two-sided test and keep the probability of a false positive to under 5%, split equally then we want to reject if the TS is larger than the quantile of 97.5% or less than the quantile of 2.5%.
+
+This is the same as saying we want to reject H0 if the _absolute_ value of the test statistic is larger than qt(0.975, 15) and qt(0.975, 15) = 2.1314 where n = 16. So we reject if our test is greater than 2.13. 
+
+Consider testing H0: μ = μ0 versus Ha: μ != μ0. The set of value for which you fail to reject H0 is (1-α)100% confidence interval for μ.
+
+The same works in reverse: if a (1-α)100% confidence interval for μ contains μ0, then fail to reject H0.
+
+### Two Group Intervals
+
+Rejection rules for group tests (using t-intervals) are the same, except how the statistic is calculated. They take the form:
+
+    (Estimate - Hypothesized Value)/Standard Error
+    
+So for two groups with hypothesised means μ1 and μ2 and two samples X1 and X2:
+
+For the equal variance case:
+
+    X1-bar - X2-bar - (μ1 - μ0)/ SP * sqrt(1/n1 + 1/n2)
+    
+Or:
+
+    X1-bar - X2-bar - (μ1 - μ0)/ sqrt(S1**2/n1 + S2**2/n2)
+    
+### Exact Binomial Test
+
+_Example:_ Suppose someone has 7 of which are girls. Perform the relevant hypothesis test: H0: p = 0.5 vs Ha: p > 0.5. What it the relevant rejection region so that the probability of rejecting is less than 5%.
+
+This is a binomial, so we just have to calculate the probabilities, don't have to do any confidence interval stuff.
+
+    for (i in -1:7){
+        prob <- round(pbinom(i, size = 8, p = .5, lower.tail = FALSE),4)
+        print(paste(i+1,":", 8, "Probability =",prob))
+    }
+
+There is no exact value for 5% probability (0.05) but 6 is 14% and 7 is 3.5% so we can reject the null where number of girls is 7 or 8.
+
+So the probability of 7 girls is 0.0352.
+
+_Example:_
+
+    library(UsingR)
+    data(father.son)
+    t.test(father.son$sheight - father.son$fheight)
+    
+This gives us:
+
+    data:  father.son$sheight - father.son$fheight
+    t = 11.79, df = 1077, p-value < 2.2e-16
+    alternative hypothesis: true mean is not equal to 0
+    95 percent confidence interval:
+    0.831 1.163
+    sample estimates:
+    mean of x
+     0.997
+
+
+
+### Summary
+
+* Fixed the rejection rate (α) to be low, so if we reject H0 there is a low probability that we have made an error.
+* We have not fixed the probability of type ii errors (β) so we say "Fail to reject H0, rather than accepting H0.
+* Statistical significance is not the same as scientific significance.
+* The Z test requires the assumption of the CLT and for n to be large enough.
+* If n is small, then a gosset's t test if performed, with normal quantiles replaced by t-quantiles and n-1 df.
+* The probability of rejecting the null hypothesis when it is false is called the power p-value. Used a lot to calculate the sample size for experiments.
+* Z-score is the number of Standard Errors the sample is above the hypothesised mean.
+* Two sided tests are the norm, even in setting where one-sided test would make sense.
+
+### Excercises
+
+Using the mtcars mpg data (assume it is random sample). With the Z-test, calculate the smallest value of hypothetical mean μ0, that you would reject the hypothesis H0: μ = μ0. (One sided 5% test level).
+
+The Z-test states that Z = (μ - μ0)/SE, where Z = qnorm(.95)SDs. So:
+
+    mpg <- mtcars$mpg
+    n <- length(mpg)
+    mean_mpg = mean(mpg) # 20.09062
+    s <- sd(mpg) # 6.026948
+    se <- s/sqrt(n) # 1.065424
+    qnorm(0.95) # 1.645SE
+    1.645 * se # 1.75622
+    hypo_mean = mean_mpg + 1.645 * se
+    hypo_mean # 21.84
+    
+Consider again the mtcars dataset. Use a two group t-test to test the hypothesis that the 4 and 6 cyl cars have the same mpg. Use a two sided test with unequal variances. Do you reject?
+
+    cars <- mtcars[mtcars$cyl %in% c(4, 6), c(1,2)]
+    cars
+    t.test(mpg ~ cyl, paired = FALSE, var.equal = FALSE, data = cars)$conf
+    
+    # data:  mpg by cyl
+    # t = 4.7191, df = 12.956, p-value = 0.0004048
+    # alternative hypothesis: true difference in means is not equal to 0
+    # 95 percent confidence interval:
+    #   3.751376 10.090182
+    # sample estimates:
+    # mean in group 4 mean in group 6 
+    #       26.66364        19.74286 
+    
+A sample of 100 men yielded an average PSA level of 3.0 with a sd of 1.1. What are the complete set of values that a 5% two sided Z test of H_0 : μ = μ0 would fail to reject the null hypothesis for?
+
+    mean = 3.0
+    s = 1.1
+    n = 100
+    se = s/sqrt(n)
+    z = qnorm(0.975)
+    mean + c(-1, 1) * z * se
+    
+You believe the coin that you’re flipping is biased towards heads. You get 55 heads out of 100 flips. Do you reject at the 5% level that the coin is fair?
+
+    round(pbinom(54, prob = .5, size = 100, lower.tail = FALSE),4)
+
+    pbinom(55, 100, prob=0.5, lower.tail = FALSE)
+    # 0.136, which is greater than 0.05 so don't reject.
+
+## P-Values
+
+P-values are the most common measure of statistical significance. Can be controversial.
+
+With P-values the null hypothesis is assumed, then you calculate how unlikely it would be to see the data in the alternative hypothesis.
+
+1. Decide on a statistic that evaluates the null and/or alternative hypotheses.
+2. Decide on a distribution of that statistic under the null hypothesis (null distribution).
+3. Calculate the probability of obtaining a statistic as or more extreme as was observed.
+
+Then you interpret the results. If the P-value is small, then either H0 is true and we have observed a rare event, or H0 is false (or the null model is incorrect).
+
+_Example:_
+
+For a t statistic with 15 degrees of freedom, a statistic of 2.5:
+
+    pt(2.5, 15, lower.tail = FALSE)
+    # [1] 0.0122529
+    
+So there is a 1.2% chance of getting that result, suggesting the null hypothesis is maybe false.
+
+### Attained Significance Level
+
+The smallest level for alpha (likelihood that the true population parameter lies outside the confidence interval) that you still reject the null hypothesis is called the _attained significance level_. This is mathematically equivalent to the p-value.
+
+Where the p-value is interpreted in the terms of how probablistically extreme our test statistic is under the null, the asl conveys what the smallest value of α the one could reject at.
+
+### Rules
+
+* If the P-value for a test is less than α, you reject the null.
+* For two-sided hypothesis, double the smaller of the two one-sided hypothesis test P-values.
+
+### Binomial P-Value Example
+
+Once again, 8 children, 7 of which are girls. p(girl) = 0.5
+
+    pbinom(6, size = 8, prob = 0.5, lower.tail = FALSE)
+    # 0.03516
+    
+So the P-value is less than 0.05.
+
+### Poisson P-Value Example
+
+Infection rate of 10 per 100 person per day, so rate of 0.1. Base infection rate is 0.05.
+
+So H0: λ = 0.05. Consider Ha: λ > 0.05 and find out if a rate of 0.09 (9 per 100 days) is unusual with respect to a Poisson distribution with a rate of 5 event per 100.
+
+    ppois(9, lambda = 5, lower.tail = FALSE)
+    # 0.03182806
+    
+So less than 0.05, we can reject the null hypothesis.
+
+### Exercises
+
+Consider again the mtcars dataset. Use a two group t-test to test the hypothesis that the 4 and 6 cyl cars have the same mpg. Use a two sided test with unequal variances. Give a P-value. 
+
+    mpg <- mtcars[mtcars$cyl %in% c(4, 6), c(1,2)]
+    t.test(mpg ~ cyl, data = mpg, paired = FALSE, var.equal = FALSE)
+    
+    # data:  mpg by cyl
+    # t = 4.7191, df = 12.956, p-value = 0.0004048
+    # alternative hypothesis: true difference in means is not equal to 0
+    # 95 percent confidence interval:
+    #   3.751376 10.090182
+    # sample estimates:
+    # mean in group 4 mean in group 6 
+    #       26.66364        19.74286 
+    0.0004048 * 2
+
+You believe the coin that you’re flipping is biased towards heads. You get 55 heads out of 100 flips. Give an exact P-value for the hypothesis that the coin is fair.
+
+    pbinom(54, size = 100, p = 0.5, lower.tail = FALSE)
+    
+A web site was monitored for a year and it received 520 hits per day. In the first 30 days in the next year, the site received 15,800 hits. Assuming that web hits are Poisson. Give an exact one sided P-value to the hypothesis that web hits are up this year over last. Do you reject? 
+
+    ppois(15800/30, lambda = 520, lower.tail = FALSE)
+    
+
+Suppose that in an AB test, one advertising scheme led to an average of 10 purchases per day for a sample of 100 days, while the other led to 11 purchases per day, also for a sample of 100 days. Assuming a common standard deviation of 4 purchases per day. Assuming that the groups are independent and that they days are iid, perform a Z test of equivalence. Give a P-value for the test?
+
+
+    m1 <- 10; 
+    m2 <- 11
+    n1 <- n2 <- 100
+    s <- 4
+    se <- s * sqrt(1 / n1 + 1 / n2)
+    ts <- (m2 - m1) / se
+    pv <- 2 * pnorm(-abs(ts))
+    
+Consider the mtcars data set.
+
+1. Give the p-value for a t-test comparing MPG for 6 and 8 cylinder cars assuming equal variance, as a proportion to 3 decimal places.
+2. Give the associated P-value for a z test.
+3. Give the common standard deviation estimate for MPG across cylinders to 3 decimal places.
+4.Would the t test reject at the two sided 0.05 level (0 for no 1 for yes)?
+
+    
+    # T-test
+    mpg <- mtcars[mtcars$cyl %in% c(6,8), c(1,2)]
+    t.test(mpg ~ cyl, data = mpg, var.equal = TRUE, paired = FALSE)
+    # p-value = 0.0003
+    
+    ? Don't know about the rest
+    
+To further test the hospital triage system, administrators selected 200 nights and randomly assigned a new triage system to be used on 100 nights and a standard system on the remaining 100 nights. They calculated the nightly median waiting time (MWT) to see a physician. 
+
+The average MWT for the new system was 4 hours with a standard deviation of 0.5 hours while the average MWT for the old system was 6 hours with a standard deviation of 2 hours. 
+
+Consider the hypothesis of a decrease in the mean MWT associated with the new treatment. What does the 95% independent group confidence interval with unequal variances suggest vis a vis this hypothesis? (Because there's so many observations per group, just use the Z quantile instead of the T.)
+
+
+
+
+Suppose that 18 obese subjects were randomized, 9 each, to a new diet pill and a placebo. The subjects’ body mass indices (BMIs) were measured at a baseline and again after four weeks. 
+
+The average difference from follow-up to the baseline (followup - baseline) was:
+
+* −3 kg/m2 with SD 1.5 kg for the treated group
+* 1 kg/m2 with SD 1.8 kg/m2 for the placebo group. 
+
+Assuming normality of the underlying data and a common population variance, calculate the relevant __90%__ t confidence interval. Subtract in the order of (Treated - Placebo) with the smaller (more negative) number first. 
+
+```{r}
+
+    n <- 9
+    n1 <- n-1
+    md <- -3-1
+    
+    # The pooled variance estimator is for groups x and y:
+    vp <- (1.5^2 * n1 + 1.8^2 * n1)/ (2*n1)
+
+    # The pooled standard deviation estimator (Sp) is the square root of the variance above.
+    sp <- sqrt(vp)
+
+    # The standard error of the mean difference (SEMD) = Sp * sqrt(1/nx + 1/ny)
+    
+    semd = sp * sqrt(1/n +1/n)
+    
+    # And the confidence interval for the mean difference is defined as: md +/ qt(1-α, nx + ny-2) * SEMD
+    
+    ci <- md + c(-1, 1) * qt(.95, df = 2*n1) * semd
+    ci
+    
+```

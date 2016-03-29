@@ -1,0 +1,54 @@
+# Summary Statistics
+
+Descriptive statistics quickly summarise and display population data, often using a few aggregate values that characterise the data, such as mean or variance.
+
+## Mean
+
+>For a sample of n values, xi, the mean (μ) is the sum of the values, divided n.
+
+Means can be a good description for a set of values, especially where the values are all quite similar. That leads us to...
+
+## Variance 
+
+Where the mean describes the central tendancy, the variance describes the spread.
+
+>The variance σ<sup>2</sup> is mean, squared deviation from the mean.
+>   
+>σ<sup>2</sup> = 1/n * sum((xi - μ)<sup>2</sup>)
+    
+The square root of the variance is the standard deviation σ.
+
+Sometime the variance is calculated by dividing by n-1. This is called the Sample Variance, and it is this formula that is used to estimate the variance in the population (from the variance of the sample). From wikipedia: "A common way to think of degrees of freedom is as the number of independent pieces of information available to estimate another piece of information. For example, if we have two observations, when calculating the mean we have two independent observations; however, when calculating the variance, we have only one independent observation, since the two observations are equally distant from the mean."
+
+_Example:_
+
+```{r}
+
+mpg <- mtcars$mpg
+n <- length(mpg) # 32
+
+# Calculate mean and variance the easy way.
+mean <- mean(mpg) # 20.09062
+variance <- var(mpg) # 36.3241
+
+# And doing it manually
+m_mean <- sum(mpg)/n # 20.09062
+m_variance <- sum((mpg - m_mean)**2)/n # 35.18897
+m_variance2 <- sum((mpg - m_mean)**2)/(n-1)
+
+print(paste(mean, variance))
+print(paste(m_mean, m_variance, m_variance2))
+
+``` 
+
+Notice the difference between the manually calculated variance and the one calculated using R's built in Var function. The difference is that the R function divides by n-1, rather than n.
+
+_Look at descriptive stats notes_.
+
+## Summary
+
+* Summary statistics like means and variance aggregate data sets and provide a simple summary, which can make comparisons easy. This can be useful for describing a population. However it does they hide a lot of information which could be important. 
+
+What's Next?
+
+An alternative is to look at the overall distribution of the data. But before going into distributions, it's useful to get some background on probability and random variables.

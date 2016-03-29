@@ -1,0 +1,206 @@
+---
+output: html_document
+---
+# USA: Harmful Weather Events
+
+## Synopsis
+
+Analysis of Storm Data from the U.S. National Oceanic and Atmospheric Administration to answer the following questions:
+
+1. Across the United States, which types of events are most harmful with respect to population health?
+2. Across the United States, which types of events have the greatest economic consequences?
+
+## Requirements
+
+The _stringdist_ package is required.
+
+```{r packages, echo = TRUE}
+library(stringdist)
+```
+
+
+## Data Processing
+
+Load data from the NOAA Storm Database, available from https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2.
+
+```{r load_process_data, echo = TRUE}
+
+# Load Data from file
+if(!exists("src_data")){
+    data_file = "data/repdata_data_StormData.csv"
+    src_data <- read.csv(data_file, stringsAsFactors = FALSE)
+}
+
+# Subset to save memory
+# src_data <- subset(src_data[190000:200000,c(2, 8, 23, 24, 25, 26,27, 28)], CROPDMG > 0)
+src_data <- subset(src_data[,c(2, 8, 23, 24, 25, 26,27, 28)], CROPDMG > 0)
+```
+
+To calculate the most costly events the event type (EVTYPE) field needs to be cleaned up and mapped to the clean list of events defined in _National Weather Service Instruction 10-1605_.
+
+This is done by comparing the EVTYPE value with the events listed and choosing the closest match.
+
+<table>
+<tbody>
+<tr class="firstRow">
+<td class="val0-cell">Astronomical Low Tide </td>
+<td class="val1-cell">Frost/Freeze </td>
+<td class="val2-cell">Marine High Wind </td>
+<td class="val3-cell">Wildfire </td>
+</tr>
+<tr>
+<td class="val0-cell">Avalanche </td>
+<td class="val1-cell">Funnel Cloud </td>
+<td class="val2-cell">Marine Strong Wind</td>
+<td class="val3-cell">Winter Storm </td>
+</tr>
+<tr>
+<td class="val0-cell">Blizzard </td>
+<td class="val1-cell">Freezing Fog</td>
+<td class="val2-cell">Marine Thunderstorm Wind </td>
+<td class="val3-cell">Winter Weather </td>
+</tr>
+<tr>
+<td class="val0-cell">Coastal Flood </td>
+<td class="val1-cell">Hail</td>
+<td class="val2-cell">Rip Current </td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Cold/Wind Chill</td>
+<td class="val1-cell">Heat </td>
+<td class="val2-cell">Seiche</td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Debris Flow </td>
+<td class="val1-cell">Heavy Rain </td>
+<td class="val2-cell">Sleet </td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Dense Fog </td>
+<td class="val1-cell">Heavy Snow </td>
+<td class="val2-cell">Storm Surge/Tide</td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Dense Smoke </td>
+<td class="val1-cell">High Surf </td>
+<td class="val2-cell">Strong Wind </td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Drought </td>
+<td class="val1-cell">High Wind </td>
+<td class="val2-cell">Thunderstorm Wind</td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Dust Devil </td>
+<td class="val1-cell">Hurricane (Typhoon) </td>
+<td class="val2-cell">Tornado </td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Dust Storm </td>
+<td class="val1-cell">Ice Storm </td>
+<td class="val2-cell">Tropical Depression</td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Excessive Heat</td>
+<td class="val1-cell">Lake-Effect Snow</td>
+<td class="val2-cell">Tropical Storm </td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Extreme Cold/Wind Chill</td>
+<td class="val1-cell">Lakeshore Flood</td>
+<td class="val2-cell">Tsunami </td>
+<td class="val3-cell"></td>
+</tr>
+<tr>
+<td class="val0-cell">Flash Flood</td>
+<td class="val1-cell">Lightning </td>
+<td class="val2-cell">Volcanic Ash </td>
+<td class="val3-cell"></td>
+</tr>
+<tr class="lastRow">
+<td class="val0-cell">Flood</td>
+<td class="val1-cell">Marine Hail </td>
+<td class="val2-cell">Waterspout </td>
+<td class="val3-cell"></td>
+</tr>
+</tbody>
+</table>
+
+The PROPDMGEXP and CROPDMGEXP fields are also cleaned up to provide consistent multipliers.
+
+```{r clean_up, echo = TRUE}
+# List of Events
+events=c("Astronomical Low Tide","Avalanche","Blizzard","Coastal Flood","Cold/Wind Chill","Debris Flow","Dense Fog","Dense Smoke","Drought","Dust Devil","Dust Storm","Excessive Heat","Extreme Cold/Wind Chill","Flash Flood","Flood","Frost/Freeze","Funnel Cloud","Freezing Fog","Hail","Heat","Heavy Rain","Heavy Snow","High Surf","High Wind","Hurricane (Typhoon)","Ice Storm","Lake-Effect Snow","Lakeshore Flood","Lightning","Marine Hail","Marine High Wind","Marine Strong Wind","Marine Thunderstorm Wind","Rip Current","Seiche","Sleet","Storm Surge/Tide","Strong Wind","Thunderstorm Wind","Tornado","Tropical Depression","Tropical Storm","Tsunami","Volcanic Ash","Waterspout","Wildfire","Winter Storm","Winter Weather")
+
+for(i in 1:nrow(src_data)){
+    
+    # Map Event Types (EVTYPE) to the nearest event from list above.
+    src_data$event[i] <- events[amatch(src_data$EVTYPE[i], events, maxDist=Inf)]
+    
+    # Clean up Prop Damage Multipliers
+    if(src_data$PROPDMGEXP[i] %in% c("", "-", "?")) {src_data$PROPDMGEXP[i] = "Z"}
+    else if (src_data$PROPDMGEXP[i] %in% c(0:8)){src_data$PROPDMGEXP[i] = "T"}
+    else if(src_data$PROPDMGEXP[i] == "+"){src_data$PROPDMGEXP[i] = "O"}
+    else {src_data$PROPDMGEXP[i] = toupper(src_data$PROPDMGEXP[i])}
+    
+    # Clean up Crop Damage Multipliers
+    if(src_data$CROPDMGEXP[i] %in% c("", "-", "?")) {src_data$CROPDMGEXP[i] = "Z"}
+    else if (src_data$CROPDMGEXP[i] %in% c(0:8)){src_data$CROPDMGEXP[i] = "T"}
+    else if(src_data$CROPDMGEXP[i] == "+"){src_data$CROPDMGEXP[i] = "O"}
+    else {src_data$CROPDMGEXP[i] = toupper(src_data$CROPDMGEXP[i])}
+}
+```
+
+Now the impact of each weather event can be calculated. The health impact has been calculated as the sum of the number of injuries plus the number of fatalities.
+
+The Propert and Crop damage has been multiplied by the appropriate amount to give a consistent total monetary value.
+
+```{r calculate_impact, echo=TRUE}
+
+# Calculate Impact on Population Health
+src_data$health_impact = src_data$FATALITIES + src_data$INJURIES
+
+# Calculate Impact on Property
+multipliers = c("Z"=0, "O"=1, "T"=10, "H" = 100, "K"=100, "M"=1000000, "B"=1000000000)
+src_data$property_impact = src_data$PROPDMG*multipliers[as.character(src_data$PROPDMGEXP)]
+src_data$crop_impact = src_data$CROPDMG*multipliers[src_data$CROPDMGEXP]
+```
+
+## Results
+
+The health, property and crop impact is calculated as a total per event. The top 5 events are summarised and displayed below.
+
+```{r calculate_results, echo=TRUE}
+
+data_summ <- aggregate(cbind(health_impact, property_impact, crop_impact) ~ event, data = src_data, FUN = sum)
+
+health <- data_summ[, 1:2]
+health <- health[order(-health$health_impact),]
+health <- health[1:5,]
+barplot(health$health_impact, names.arg = health$event, main="Top 5 Events (Impact on health)", horiz=TRUE, las="2", cex.names="0.75", cex.axis="0.75")
+health
+
+property <- data_summ[, c(1,3)]
+property <- property[order(-property$property_impact),]
+property <- property[1:5,]
+property$property_impact <- property$property_impact/1000000
+barplot(property$property_impact, names.arg = property$event, main="Top 5 Events (Impact on property)", horiz=TRUE, xlab="millions", las="2", cex.names="0.75", cex.axis="0.75")
+property
+
+crop <- data_summ[, c(1,4)]
+crop <- crop[order(-crop$crop_impact),]
+crop <- crop[1:5,]
+crop$crop_impact <- crop$crop_impact/1000000
+barplot(crop$crop_impact, names.arg = crop$event, main="Top 5 Events (Impact on crop)", horiz=TRUE, xlab="millions", las="2", cex.names="0.75", cex.axis="0.75")
+crop
+```
+

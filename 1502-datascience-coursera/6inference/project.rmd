@@ -1,0 +1,75 @@
+---
+output: html_document
+---
+# Statistical Inference
+# Course Project
+
+Bruce Hadden  
+14/11/2015
+
+## Overview
+
+This is the course project for the [Statistical Inference](https://class.coursera.org/statinference-034/) course. I investigate the exponential distribution in and compare it with the Central Limit Theorem, but taking a large sample of random exponentials and comparing with large sample of means of exponentials.
+
+## Simulations
+
+The random exponential values are simulated using the rexp function with the rate (lambda) set to 0.2.
+
+I've generated two sets of simulation data:
+
+1. Generated a sample of 1000 exponentials (population).
+2. Generated 1000 samples of 40 exponentials (sample).
+
+```{r setup, echo = TRUE}
+lambda <- 0.2
+n <- 40
+no_sims <- 1000
+sample <- matrix(rexp(n * no_sims, lambda), nrow=no_sims, ncol=n)
+population <- rexp(1000, lambda) # a large sample of exponentials for comparison
+sample_distribution <- (apply(sample, 1, mean))
+```
+
+
+## 1. Comparison of means
+
+Here I compare 1. the mean of the exponentials with 2. the mean of the samples and 3. the theoretical mean of the exponential distribution. The theoretical mean of an exponential distribution is 1/lambda.
+
+```{r means, echo = TRUE}
+theoretical_mean <- 1/lambda
+mean_of_sample_distribution <- mean(sample_distribution)
+mean_of_population <- mean(population)
+```
+
+Mean of Exponentials: `r mean_of_population`  
+Mean of Samples: `r mean_of_sample_distribution`  
+Theoretical Mean: `r theoretical_mean` 
+
+## 2. Comparison of Variance
+
+Here I compare the variance of random exponentials with the theoretical variance (1/λ<sup>2</sup>). 
+
+Then I compare the variance of the sample of random exponentials and the theoretical variance of samples (σ<sup>2</sup>/n).
+
+```{r variance, echo = TRUE}
+
+var_of_population <- var(population)
+theoretical_variance <- 1/lambda**2
+var_of_sample <- var(sample_distribution)
+theoretical_var_of_sample <- theoretical_variance**2/no_sims
+```
+
+Variance of Exponentials: `r var_of_population`  
+Theoretical Variance: `r theoretical_variance`  
+
+Variance of Samples: `r var_of_sample`  
+Theoretical Variance of Samples: `r theoretical_var_of_sample`  
+
+# 3. Sample Distribution
+
+We see that the sample of means have a more normal distribution. Compared to the distribution of exponentials.
+
+```{r distribution, echo = TRUE}
+par(mfrow=c(1,2))
+hist(population, main = "Exponential Distribution")
+hist(sample_distribution, main = "Sample Distribution")
+```

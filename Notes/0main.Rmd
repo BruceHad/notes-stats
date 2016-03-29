@@ -1,0 +1,54 @@
+---  
+title: Statistics Notes
+output: 
+  html_document:
+    toc: true
+    theme: null
+    css: "css/style.css"
+---
+
+Last Updated: December 2015
+
+To Do:
+
+* Regression
+
+Course notes for Statistics.
+
+Notes are mainly for the [Data Science Specialisation](https://www.coursera.org/specializations/jhudatascience) on Coursera. See references.Rmd for more sources.
+
+## Intro to Statistics
+
+Anecdotal evidence is misleading because: small no. of observations, selection bias, confirmation bias, inaccuracy. 
+A statistical approach tries to avoid these problems. It involves data collection, descriptive of stats, exploratory data analysis, inference and hypothesis testing and estimation.
+
+A _population_ encompasses everything or everyone that you want to make statements about. A study will usually be carried out on a smaller subset or _sample_ of the population. A group of respondents is called a _cohort_.
+
+The cohort is supposed to be representative of the population (but sometime studies are weighted towards some section of the population by design or by necessity).
+
+A _cross-sectional_ study captures a snapshot of a group at a point in time, where a _longitudinal_ study follows a group repeatedly over time.
+
+A cross-sectional study captures a snapshot of a group at a point in time, where a longitudinal study follows a group repeatedly over time.
+
+Statistics can be used to determine whether the data collected 'means something'. 
+
+* It tries to be precise about the data using summary statistics like mean, median and variance. 
+* It accounts for the possibility of the results occuring randomly, assessing _statistical significance_ of the result. 
+* And it tries to assess the effect of errors or bias on the data.
+
+```{r child = '1descriptive_stats.Rmd'}
+```
+```{r child = '2probability.Rmd'}
+```
+```{r child = '3testing.Rmd'}
+```
+```{r child = '4resampling.Rmd'}
+```
+
+# Appendices
+
+```{r child = 'zglossary.Rmd'}
+```
+
+```{r child = 'zreferences.Rmd'}
+```
